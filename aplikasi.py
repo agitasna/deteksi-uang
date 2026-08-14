@@ -67,15 +67,7 @@ for key, value in default_state.items():
 # TTS
 
 def browser_speak(text):
-    """
-    TTS menggunakan Web Speech API pada browser.
-
-    Berbeda dengan pyttsx3:
-    - pyttsx3 berjalan di server
-    - Web Speech API berjalan di browser pengguna
-    """
     if not text:
-
         return
         
     escaped_text = (
@@ -452,17 +444,6 @@ with top_left:
                 
                 if st.session_state.tts_text is not None:
                     browser_speak(st.session_state.tts_text)
-
-
-# ======================================================
-# BROWSER TTS
-# ======================================================
-
-if st.session_state.tts_text is not None:
-
-    browser_speak(
-        st.session_state.tts_text
-    )
 
 
 # KANAN
