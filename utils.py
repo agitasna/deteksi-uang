@@ -5,7 +5,6 @@ import threading
 import cv2
 import numpy as np
 import tensorflow as tf
-import pyttsx3
 import gdown
 
 
@@ -131,86 +130,6 @@ def load_model():
 
 
     return model, class_names
-
-
-# ======================================================
-# TEXT TO SPEECH
-# ======================================================
-
-def _speak_text(text):
-
-    try:
-
-        engine = pyttsx3.init()
-
-        engine.setProperty(
-            "rate",
-            150
-        )
-
-        engine.setProperty(
-            "volume",
-            1.0
-        )
-
-        engine.say(text)
-
-        engine.runAndWait()
-
-        engine.stop()
-
-    except Exception as e:
-
-        print(
-            "TTS Error:",
-            e
-        )
-
-
-# ======================================================
-# SPEAK MESSAGE
-# ======================================================
-
-def speak_message(message):
-
-    thread = threading.Thread(
-        target=_speak_text,
-        args=(message,),
-        daemon=True
-    )
-
-    thread.start()
-
-
-# ======================================================
-# FORMAT NOMINAL
-# ======================================================
-
-def format_nominal(label):
-
-    nominal_map = {
-
-        "1rb": "Rp1.000",
-
-        "2rb": "Rp2.000",
-
-        "5rb": "Rp5.000",
-
-        "10rb": "Rp10.000",
-
-        "20rb": "Rp20.000",
-
-        "50rb": "Rp50.000",
-
-        "100rb": "Rp100.000"
-
-    }
-
-    return nominal_map.get(
-        label,
-        label
-    )
-
 
 # ======================================================
 # FORMAT NOMINAL UNTUK SUARA
