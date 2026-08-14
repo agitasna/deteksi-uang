@@ -62,7 +62,7 @@
     if (!SpeechRecognition) {
 
         console.log(
-            "❌ Speech Recognition tidak didukung."
+            "Speech Recognition tidak didukung."
         );
 
     }
@@ -72,10 +72,6 @@
         const recognition =
             new SpeechRecognition();
 
-
-        // ==================================================
-        // CONFIGURATION
-        // ==================================================
 
         recognition.lang = "id-ID";
 
@@ -92,10 +88,6 @@
 
         let lastCommandTime = 0;
 
-
-        // ==================================================
-        // START
-        // ==================================================
 
         function startRecognition() {
 
@@ -124,24 +116,16 @@
         }
 
 
-        // ==================================================
-        // START EVENT
-        // ==================================================
-
         recognition.onstart = function() {
 
             listening = true;
 
             console.log(
-                "🎤 Speech Recognition aktif"
+                "Speech Recognition aktif"
             );
 
         };
 
-
-        // ==================================================
-        // RESULT
-        // ==================================================
 
         recognition.onresult = function(event) {
 
@@ -155,14 +139,14 @@
 
 
             console.log(
-                "🎤 Suara terdeteksi:",
+                "Suara terdeteksi:",
                 result
             );
 
 
-            // ==================================================
+            // ==========================================
             // AMBIL FOTO
-            // ==================================================
+            // ==========================================
 
             if (
 
@@ -178,10 +162,6 @@
                     Date.now();
 
 
-                // ----------------------------------------------
-                // CEGAH COMMAND GANDA
-                // ----------------------------------------------
-
                 if (
 
                     lastCommand === "ambil_foto"
@@ -191,10 +171,6 @@
                     now - lastCommandTime < 3000
 
                 ) {
-
-                    console.log(
-                        "⏳ Command diabaikan."
-                    );
 
                     return;
 
@@ -209,37 +185,33 @@
                     now;
 
 
-                console.log(
-                    "📸 AMBIL FOTO TERDETEKSI"
+                sendMessageToStreamlit(
+
+                    "streamlit:setComponentValue",
+
+                    {
+
+                        value: {
+
+                            command: "ambil_foto",
+
+                            id: Date.now()
+
+                        }
+
+                    }
+
                 );
 
+            }
 
-                // ----------------------------------------------
-                // KIRIM NILAI KE STREAMLIT
-                // ----------------------------------------------
+        };
 
-                sendMessageToStreamlit(
-                "streamlit:setComponentValue",
-                
-                {
-                    value: {
-                        command: "ambil_foto",
-                        id: Date.now()
-                    }
-                }
-            );
-        }
-    };
-
-
-        // ==================================================
-        // ERROR
-        // ==================================================
 
         recognition.onerror = function(event) {
 
             console.log(
-                "⚠️ Speech error:",
+                "Speech error:",
                 event.error
             );
 
@@ -256,10 +228,6 @@
                 event.error === "service-not-allowed"
 
             ) {
-
-                console.log(
-                    "❌ Microphone tidak mendapatkan izin."
-                );
 
                 return;
 
@@ -281,16 +249,7 @@
         };
 
 
-        // ==================================================
-        // END
-        // ==================================================
-
         recognition.onend = function() {
-
-            console.log(
-                "🎤 Speech Recognition berhenti."
-            );
-
 
             listening = false;
 
@@ -310,11 +269,72 @@
         };
 
 
-        // ==================================================
-        // START
-        // ==================================================
-
         startRecognition();
+
+    }
+
+
+    // ==================================================
+    // TEXT TO SPEECH
+    // ==================================================
+
+    function speakText(text) {
+
+        if (
+
+            !text
+
+            ||
+
+            typeof text !== "string"
+
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+
+            !("speechSynthesis" in window)
+
+        ) {
+
+            console.log(
+                "Speech Synthesis tidak didukung."
+            );
+
+            return;
+
+        }
+
+
+        console.log(
+            "TTS:",
+            text
+        );
+
+
+        window.speechSynthesis.cancel();
+
+
+        const utterance =
+            new SpeechSynthesisUtterance(text);
+
+
+        utterance.lang = "id-ID";
+
+        utterance.rate = 0.9;
+
+        utterance.pitch = 1.0;
+
+        utterance.volume = 1.0;
+
+
+        window.speechSynthesis.speak(
+            utterance
+        );
 
     }
 
@@ -336,9 +356,6 @@
             }
 
 
-            // Streamlit mengirim pesan konfigurasi
-            // ke component.
-
             if (
 
                 event.data.type ===
@@ -347,8 +364,29 @@
             ) {
 
                 console.log(
-                    "🔄 Streamlit render component."
+                    "Streamlit render component."
                 );
+
+
+                const args =
+                    event.data.args;
+
+
+                if (
+
+                    args
+
+                    &&
+
+                    args.speak_text
+
+                ) {
+
+                    speakText(
+                        args.speak_text
+                    );
+
+                }
 
             }
 
