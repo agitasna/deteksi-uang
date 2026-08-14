@@ -88,7 +88,7 @@ def nominal_to_speech(label):
         "5rb": "lima ribu rupiah",
         "10rb": "sepuluh ribu rupiah",
         "20rb": "dua puluh ribu rupiah",
-        "50rb": "lima puluh rupiah",
+        "50rb": "lima puluh ribu rupiah",
         "100rb": "seratus ribu rupiah"
     }
 
