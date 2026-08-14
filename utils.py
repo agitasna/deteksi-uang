@@ -5,6 +5,8 @@ import numpy as np
 import tensorflow as tf
 import gdown
 
+MODEL_PATH = "model/model_uang.keras"
+LABEL_PATH = "model/labels.txt"
 
 # GOOGLE DRIVE
 
