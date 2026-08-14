@@ -7,8 +7,13 @@ _component = components.declare_component(
 )
 
 
-def voice_recognition():
+def voice_recognition(
+    speak_text="",
+    key=None
+):
 
     return _component(
-        default=None
+        speak_text=speak_text,
+        default=None,
+        key=key
     )
