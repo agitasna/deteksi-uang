@@ -13,8 +13,7 @@ from utils import (
     load_model,
     predict_image,
     format_nominal,
-    speak,
-    speak_message,
+    nominal_to_speech,
     add_history
 )
 
