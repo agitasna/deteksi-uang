@@ -12,8 +12,7 @@ from voice_component import voice_recognition
 from utils import (
     load_model,
     predict_image,
-    format_nominal,
-    add_history
+    format_nominal
 )
 
 st.set_page_config(
