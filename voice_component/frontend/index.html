@@ -1,48 +1,28 @@
 <!DOCTYPE html>
-
 <html lang="id">
 
 <head>
-
     <meta charset="UTF-8">
-
     <title>Voice Recognition</title>
-
 </head>
 
 <body>
 
 <script>
-
-    // ==================================================
-    // STREAMLIT COMPONENT
-    // ==================================================
-
     function sendMessageToStreamlit(type, data) {
 
         window.parent.postMessage(
-
             {
                 isStreamlitMessage: true,
                 type: type,
                 ...data
             },
-
             "*"
-
         );
-
     }
 
-
-    // ==================================================
-    // COMPONENT READY
-    // ==================================================
-
     sendMessageToStreamlit(
-
         "streamlit:componentReady",
-
         {
             apiVersion: 1
         }
@@ -50,85 +30,59 @@
     );
 
 
-    // ==================================================
+    
     // SPEECH RECOGNITION
-    // ==================================================
 
     const SpeechRecognition =
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
 
-
     if (!SpeechRecognition) {
-
         console.log(
             "Speech Recognition tidak didukung."
         );
-
     }
-
+        
     else {
-
         const recognition =
             new SpeechRecognition();
 
-
         recognition.lang = "id-ID";
-
         recognition.continuous = true;
-
         recognition.interimResults = false;
-
         recognition.maxAlternatives = 1;
 
-
         let listening = false;
-
         let lastCommand = "";
-
         let lastCommandTime = 0;
 
-
         function startRecognition() {
-
             if (listening) {
-
                 return;
-
             }
 
-
             try {
-
                 recognition.start();
-
             }
 
             catch (error) {
-
                 console.log(
                     "Speech start error:",
                     error
                 );
-
             }
-
         }
 
 
         recognition.onstart = function() {
-
             listening = true;
-
             console.log(
                 "Speech Recognition aktif"
             );
 
         };
 
-
         recognition.onresult = function(event) {
-
             const result =
                 event.results[
                     event.results.length - 1
@@ -137,265 +91,159 @@
                 .toLowerCase()
                 .trim();
 
-
             console.log(
                 "Suara terdeteksi:",
                 result
             );
 
-
-            // ==========================================
-            // AMBIL FOTO
-            // ==========================================
+            
+            // VOICE AMBIL FOTO
 
             if (
-
                 result.includes("ambil foto")
-
                 ||
-
                 result.includes("ambil gambar")
-
             ) {
-
                 const now =
                     Date.now();
 
-
                 if (
-
                     lastCommand === "ambil_foto"
-
                     &&
-
                     now - lastCommandTime < 3000
-
                 ) {
-
                     return;
-
                 }
 
-
-                lastCommand =
-                    "ambil_foto";
-
-
-                lastCommandTime =
-                    now;
-
+                lastCommand = "ambil_foto";
+                lastCommandTime = now;
 
                 sendMessageToStreamlit(
-
                     "streamlit:setComponentValue",
-
                     {
-
                         value: {
-
                             command: "ambil_foto",
-
                             id: Date.now()
-
                         }
-
                     }
-
                 );
-
             }
-
         };
 
-
         recognition.onerror = function(event) {
-
             console.log(
                 "Speech error:",
                 event.error
             );
 
-
             listening = false;
-
 
             if (
-
                 event.error === "not-allowed"
-
                 ||
-
                 event.error === "service-not-allowed"
-
             ) {
-
                 return;
-
             }
 
-
             setTimeout(
-
                 function() {
-
                     startRecognition();
-
                 },
-
                 1000
-
             );
-
         };
-
 
         recognition.onend = function() {
-
             listening = false;
 
-
             setTimeout(
-
                 function() {
-
                     startRecognition();
-
                 },
-
                 1000
-
             );
-
         };
 
-
         startRecognition();
-
     }
 
 
-    // ==================================================
-    // TEXT TO SPEECH
-    // ==================================================
-
+    // TTTS
+    
     function speakText(text) {
-
         if (
-
             !text
-
             ||
-
             typeof text !== "string"
-
         ) {
-
             return;
-
         }
 
-
         if (
-
             !("speechSynthesis" in window)
-
         ) {
-
             console.log(
                 "Speech Synthesis tidak didukung."
             );
-
             return;
-
         }
-
 
         console.log(
             "TTS:",
             text
         );
 
-
         window.speechSynthesis.cancel();
-
 
         const utterance =
             new SpeechSynthesisUtterance(text);
 
-
         utterance.lang = "id-ID";
-
         utterance.rate = 0.9;
-
         utterance.pitch = 1.0;
-
         utterance.volume = 1.0;
-
 
         window.speechSynthesis.speak(
             utterance
         );
-
     }
 
 
-    // ==================================================
-    // STREAMLIT MESSAGE
-    // ==================================================
+    // STREAMLIT 
 
     window.addEventListener(
-
         "message",
 
         function(event) {
-
             if (!event.data) {
-
                 return;
-
             }
 
-
             if (
-
                 event.data.type ===
                 "streamlit:render"
-
             ) {
-
                 console.log(
                     "Streamlit render component."
                 );
-
-
+                
                 const args =
                     event.data.args;
 
-
                 if (
-
                     args
-
                     &&
-
                     args.speak_text
-
                 ) {
-
                     speakText(
                         args.speak_text
                     );
-
                 }
-
             }
-
         }
-
     );
 
 </script>
-
 </body>
-
 </html>
