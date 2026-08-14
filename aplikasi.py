@@ -13,7 +13,6 @@ from utils import (
     load_model,
     predict_image,
     format_nominal,
-    nominal_to_speech,
     add_history
 )
 
@@ -55,7 +54,7 @@ def load_cnn():
 
 
 model, class_names = load_cnn()
-tts_text = ""
+
 
 # ======================================================
 # SESSION STATE
@@ -64,13 +63,22 @@ tts_text = ""
 default_state = {
 
     "image": None,
+
     "prediction": None,
+
     "confidence": 0,
+
     "probability": None,
+
     "inference": 0,
+
     "history": [],
-    "camera_instruction_spoken": False,
-    "last_command_id": None
+
+    "last_command_id": None,
+
+    "tts_text": None,
+
+    "tts_id": None
 
 }
 
@@ -80,6 +88,94 @@ for key, value in default_state.items():
     if key not in st.session_state:
 
         st.session_state[key] = value
+
+
+# ======================================================
+# BROWSER TEXT TO SPEECH
+# ======================================================
+
+def browser_speak(text):
+
+    """
+    TTS menggunakan Web Speech API pada browser.
+
+    Berbeda dengan pyttsx3:
+    - pyttsx3 berjalan di server
+    - Web Speech API berjalan di browser pengguna
+    """
+
+    if not text:
+
+        return
+
+    escaped_text = (
+        text
+        .replace("\\", "\\\\")
+        .replace("'", "\\'")
+        .replace("\n", " ")
+    )
+
+    st.components.v1.html(
+
+        f"""
+        <script>
+
+        const text = '{escaped_text}';
+
+        if ('speechSynthesis' in window) {{
+
+            window.speechSynthesis.cancel();
+
+            const speech =
+                new SpeechSynthesisUtterance(text);
+
+            speech.lang = 'id-ID';
+
+            speech.rate = 0.9;
+
+            speech.pitch = 1.0;
+
+            speech.volume = 1.0;
+
+            window.speechSynthesis.speak(speech);
+
+        }}
+
+        </script>
+        """,
+
+        height=0
+    )
+
+
+# ======================================================
+# NOMINAL UNTUK SUARA
+# ======================================================
+
+def nominal_to_speech(label):
+
+    nominal_map = {
+
+        "1rb": "seribu rupiah",
+
+        "2rb": "dua ribu rupiah",
+
+        "5rb": "lima ribu rupiah",
+
+        "10rb": "sepuluh ribu rupiah",
+
+        "20rb": "dua puluh ribu rupiah",
+
+        "50rb": "lima puluh ribu rupiah",
+
+        "100rb": "seratus ribu rupiah"
+
+    }
+
+    return nominal_map.get(
+        label,
+        label
+    )
 
 
 # ======================================================
@@ -99,8 +195,6 @@ with st.sidebar:
     st.divider()
 
 
-    # Webcam sebagai mode pertama/default
-
     mode = st.radio(
 
         "Mode",
@@ -108,7 +202,7 @@ with st.sidebar:
         [
             "📷 Webcam",
             "📁 Upload Gambar"
-        ],
+        ]
 
     )
 
@@ -130,12 +224,12 @@ with st.sidebar:
 
 
 # ======================================================
-# RESET INSTRUCTION SAAT PINDAH MODE
+# RESET SAAT PINDAH MODE
 # ======================================================
 
 if mode == "📁 Upload Gambar":
 
-    st.session_state.camera_instruction_spoken = False
+    st.session_state.last_command_id = None
 
 
 # ======================================================
@@ -145,15 +239,21 @@ if mode == "📁 Upload Gambar":
 st.markdown(
     """
     <div class="hero">
-        <h1>Deteksi Nominal Uang Rupiah</h1>
+
+        <h1>
+            Deteksi Nominal Uang Rupiah
+        </h1>
+
         <p>
             Aplikasi klasifikasi nominal uang Rupiah
             menggunakan Convolutional Neural Network (CNN)
         </p>
+
     </div>
     """,
     unsafe_allow_html=True
 )
+
 
 # ======================================================
 # LAYOUT
@@ -230,6 +330,7 @@ with top_left:
             video_processor_factory=Camera,
 
             async_processing=True,
+
             desired_playing_state=True
 
         )
@@ -245,6 +346,7 @@ with top_left:
                 "📷 Kamera aktif."
             )
 
+
             # ==================================================
             # VOICE RECOGNITION
             # ==================================================
@@ -253,14 +355,14 @@ with top_left:
 
 
             # ==================================================
-            # CEK HASIL VOICE COMMAND
+            # CEK VOICE COMMAND
             # ==================================================
 
             if voice_command is not None:
 
-                # ------------------------------------------
-                # Pastikan hasil berupa dictionary
-                # ------------------------------------------
+                # ==========================================
+                # DICTIONARY
+                # ==========================================
 
                 if isinstance(
                     voice_command,
@@ -277,14 +379,10 @@ with top_left:
 
 
                     # ======================================
-                    # PERINTAH AMBIL FOTO
+                    # AMBIL FOTO
                     # ======================================
 
                     if command == "ambil_foto":
-
-                        # ==================================
-                        # CEK COMMAND BARU
-                        # ==================================
 
                         if (
 
@@ -294,18 +392,14 @@ with top_left:
 
                         ):
 
-                            # ------------------------------
-                            # SIMPAN ID COMMAND TERAKHIR
-                            # ------------------------------
-
                             st.session_state.last_command_id = (
                                 command_id
                             )
 
 
-                            # ==============================
-                            # CEK FRAME KAMERA
-                            # ==============================
+                            # ==================================
+                            # CEK FRAME
+                            # ==================================
 
                             if (
 
@@ -319,9 +413,9 @@ with top_left:
 
                             ):
 
-                                # ==========================
+                                # ==============================
                                 # AMBIL FRAME TERBARU
-                                # ==========================
+                                # ==============================
 
                                 st.session_state.image = (
 
@@ -334,14 +428,13 @@ with top_left:
                                     "📸 Foto berhasil diambil."
                                 )
 
-                                # ==========================
-                                # PREDIKSI CNN
-                                # ==========================
+
+                                # ==============================
+                                # PREDIKSI
+                                # ==============================
 
                                 with st.spinner(
-
                                     "Sedang melakukan prediksi..."
-
                                 ):
 
                                     (
@@ -365,9 +458,9 @@ with top_left:
                                     )
 
 
-                                # ==========================
-                                # SIMPAN HASIL TERBARU
-                                # ==========================
+                                # ==============================
+                                # SIMPAN HASIL
+                                # ==============================
 
                                 st.session_state.prediction = (
                                     prediction
@@ -386,9 +479,9 @@ with top_left:
                                 )
 
 
-                                # ==========================
-                                # SIMPAN HISTORY
-                                # ==========================
+                                # ==============================
+                                # HISTORY
+                                # ==============================
 
                                 st.session_state.history = (
 
@@ -405,11 +498,24 @@ with top_left:
                                 )
 
 
-                                # ==========================
-                                # TTS HASIL
-                                # ==========================
+                                # ==============================
+                                # TTS BROWSER
+                                # ==============================
 
-                                tts_text = nominal_to_speech(prediction)
+                                speech_text = (
+                                    nominal_to_speech(
+                                        prediction
+                                    )
+                                )
+
+
+                                st.session_state.tts_text = (
+                                    speech_text
+                                )
+
+                                st.session_state.tts_id = (
+                                    command_id
+                                )
 
 
                             else:
@@ -423,12 +529,11 @@ with top_left:
                                 )
 
 
-                else:
+                # ==========================================
+                # KOMPATIBILITAS STRING LAMA
+                # ==========================================
 
-                    # --------------------------------------
-                    # Kompatibilitas jika component lama
-                    # mengirim string
-                    # --------------------------------------
+                else:
 
                     if voice_command == "ambil_foto":
 
@@ -474,9 +579,7 @@ with top_left:
                                 # ==============================
 
                                 with st.spinner(
-
                                     "Sedang melakukan prediksi..."
-
                                 ):
 
                                     (
@@ -517,6 +620,10 @@ with top_left:
                                 )
 
 
+                                # ==============================
+                                # HISTORY
+                                # ==============================
+
                                 st.session_state.history = (
 
                                     add_history(
@@ -531,7 +638,25 @@ with top_left:
 
                                 )
 
-                                tts_text = nominal_to_speech(prediction)
+
+                                # ==============================
+                                # TTS
+                                # ==============================
+
+                                speech_text = (
+                                    nominal_to_speech(
+                                        prediction
+                                    )
+                                )
+
+
+                                st.session_state.tts_text = (
+                                    speech_text
+                                )
+
+                                st.session_state.tts_id = (
+                                    "legacy_ambil_foto"
+                                )
 
 
     # ==================================================
@@ -619,7 +744,7 @@ with top_left:
 
 
         # ==================================================
-        # PREDIKSI UNTUK UPLOAD SAJA
+        # PREDIKSI UPLOAD
         # ==================================================
 
         if mode == "📁 Upload Gambar":
@@ -635,9 +760,7 @@ with top_left:
             ):
 
                 with st.spinner(
-
                     "Sedang melakukan prediksi..."
-
                 ):
 
                     (
@@ -661,9 +784,9 @@ with top_left:
                     )
 
 
-                # ------------------------------------------
+                # ==========================================
                 # SIMPAN HASIL
-                # ------------------------------------------
+                # ==========================================
 
                 st.session_state.prediction = (
                     prediction
@@ -682,9 +805,9 @@ with top_left:
                 )
 
 
-                # ------------------------------------------
+                # ==========================================
                 # HISTORY
-                # ------------------------------------------
+                # ==========================================
 
                 st.session_state.history = (
 
@@ -701,11 +824,36 @@ with top_left:
                 )
 
 
-                # ------------------------------------------
-                # TTS UPLOAD
-                # ------------------------------------------
+                # ==========================================
+                # TTS BROWSER
+                # ==========================================
 
-                tts_text = nominal_to_speech(prediction)
+                speech_text = (
+                    nominal_to_speech(
+                        prediction
+                    )
+                )
+
+
+                st.session_state.tts_text = (
+                    speech_text
+                )
+
+                st.session_state.tts_id = (
+                    f"upload_{prediction}"
+                )
+
+
+# ======================================================
+# BROWSER TTS
+# ======================================================
+
+if st.session_state.tts_text is not None:
+
+    browser_speak(
+        st.session_state.tts_text
+    )
+
 
 # ======================================================
 # PANEL KANAN
@@ -815,7 +963,48 @@ with top_right:
 
 
         st.caption(
-
             f"{confidence:.2f}%"
+        )
+
+
+        # ==================================================
+        # INFORMASI SUARA
+        # ==================================================
+
+        st.info(
+            "🔊 Hasil nominal dibacakan secara otomatis "
+            "menggunakan suara pada browser."
+        )
+
+
+# ======================================================
+# RIWAYAT PREDIKSI
+# ======================================================
+
+st.markdown("---")
+
+st.markdown(
+    "## 📋 Riwayat Prediksi"
+)
+
+
+if len(st.session_state.history) == 0:
+
+    st.info(
+        "Belum ada riwayat prediksi."
+    )
+
+else:
+
+    for item in reversed(
+        st.session_state.history
+    ):
+
+        st.write(
+
+            f"**{format_nominal(item['prediction'])}** "
+            f"— Confidence: "
+            f"**{item['confidence']:.2f}%** "
+            f"— {item['timestamp']}"
 
         )
