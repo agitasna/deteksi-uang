@@ -958,35 +958,3 @@ with top_right:
         st.caption(
             f"{confidence:.2f}%"
         )
-
-# ======================================================
-# RIWAYAT PREDIKSI
-# ======================================================
-
-st.markdown("---")
-
-st.markdown(
-    "## 📋 Riwayat Prediksi"
-)
-
-
-if len(st.session_state.history) == 0:
-
-    st.info(
-        "Belum ada riwayat prediksi."
-    )
-
-else:
-
-    for item in reversed(
-        st.session_state.history
-    ):
-
-        st.write(
-
-            f"**{format_nominal(item['prediction'])}** "
-            f"— Confidence: "
-            f"**{item['confidence']:.2f}%** "
-            f"— {item['timestamp']}"
-
-        )
