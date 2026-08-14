@@ -55,7 +55,7 @@ def load_cnn():
 
 
 model, class_names = load_cnn()
-
+tts_text = ""
 
 # ======================================================
 # SESSION STATE
