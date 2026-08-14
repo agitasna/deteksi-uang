@@ -959,17 +959,6 @@ with top_right:
             f"{confidence:.2f}%"
         )
 
-
-        # ==================================================
-        # INFORMASI SUARA
-        # ==================================================
-
-        st.info(
-            "🔊 Hasil nominal dibacakan secara otomatis "
-            "menggunakan suara pada browser."
-        )
-
-
 # ======================================================
 # RIWAYAT PREDIKSI
 # ======================================================
