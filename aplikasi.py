@@ -231,7 +231,6 @@ if mode == "📁 Upload Gambar":
 
     st.session_state.last_command_id = None
 
-
 # ======================================================
 # HEADER
 # ======================================================
@@ -239,21 +238,15 @@ if mode == "📁 Upload Gambar":
 st.markdown(
     """
     <div class="hero">
-
-        <h1>
-            Deteksi Nominal Uang Rupiah
-        </h1>
-
+        <h1>Deteksi Nominal Uang Rupiah</h1>
         <p>
             Aplikasi klasifikasi nominal uang Rupiah
             menggunakan Convolutional Neural Network (CNN)
         </p>
-
     </div>
     """,
     unsafe_allow_html=True
 )
-
 
 # ======================================================
 # LAYOUT
