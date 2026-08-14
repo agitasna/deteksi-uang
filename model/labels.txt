@@ -1,0 +1,7 @@
+1rb
+2rb
+5rb
+10rb
+20rb
+50rb
+100rb

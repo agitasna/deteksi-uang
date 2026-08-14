@@ -1,0 +1,4 @@
+model/model_uang.keras
+__pycache__/
+*/__pycache__/
+*.pyc

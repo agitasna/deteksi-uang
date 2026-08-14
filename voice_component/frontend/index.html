@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+
+<html lang="id">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Voice Recognition</title>
+
+</head>
+
+<body>
+
+<script>
+
+    // ==================================================
+    // STREAMLIT COMPONENT
+    // ==================================================
+
+    function sendMessageToStreamlit(type, data) {
+
+        window.parent.postMessage(
+
+            {
+                isStreamlitMessage: true,
+                type: type,
+                ...data
+            },
+
+            "*"
+
+        );
+
+    }
+
+
+    // ==================================================
+    // COMPONENT READY
+    // ==================================================
+
+    sendMessageToStreamlit(
+
+        "streamlit:componentReady",
+
+        {
+            apiVersion: 1
+        }
+
+    );
+
+
+    // ==================================================
+    // SPEECH RECOGNITION
+    // ==================================================
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+
+    if (!SpeechRecognition) {
+
+        console.log(
+            "❌ Speech Recognition tidak didukung."
+        );
+
+    }
+
+    else {
+
+        const recognition =
+            new SpeechRecognition();
+
+
+        // ==================================================
+        // CONFIGURATION
+        // ==================================================
+
+        recognition.lang = "id-ID";
+
+        recognition.continuous = true;
+
+        recognition.interimResults = false;
+
+        recognition.maxAlternatives = 1;
+
+
+        let listening = false;
+
+        let lastCommand = "";
+
+        let lastCommandTime = 0;
+
+
+        // ==================================================
+        // START
+        // ==================================================
+
+        function startRecognition() {
+
+            if (listening) {
+
+                return;
+
+            }
+
+
+            try {
+
+                recognition.start();
+
+            }
+
+            catch (error) {
+
+                console.log(
+                    "Speech start error:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        // ==================================================
+        // START EVENT
+        // ==================================================
+
+        recognition.onstart = function() {
+
+            listening = true;
+
+            console.log(
+                "🎤 Speech Recognition aktif"
+            );
+
+        };
+
+
+        // ==================================================
+        // RESULT
+        // ==================================================
+
+        recognition.onresult = function(event) {
+
+            const result =
+                event.results[
+                    event.results.length - 1
+                ][0]
+                .transcript
+                .toLowerCase()
+                .trim();
+
+
+            console.log(
+                "🎤 Suara terdeteksi:",
+                result
+            );
+
+
+            // ==================================================
+            // AMBIL FOTO
+            // ==================================================
+
+            if (
+
+                result.includes("ambil foto")
+
+                ||
+
+                result.includes("ambil gambar")
+
+            ) {
+
+                const now =
+                    Date.now();
+
+
+                // ----------------------------------------------
+                // CEGAH COMMAND GANDA
+                // ----------------------------------------------
+
+                if (
+
+                    lastCommand === "ambil_foto"
+
+                    &&
+
+                    now - lastCommandTime < 3000
+
+                ) {
+
+                    console.log(
+                        "⏳ Command diabaikan."
+                    );
+
+                    return;
+
+                }
+
+
+                lastCommand =
+                    "ambil_foto";
+
+
+                lastCommandTime =
+                    now;
+
+
+                console.log(
+                    "📸 AMBIL FOTO TERDETEKSI"
+                );
+
+
+                // ----------------------------------------------
+                // KIRIM NILAI KE STREAMLIT
+                // ----------------------------------------------
+
+                sendMessageToStreamlit(
+                "streamlit:setComponentValue",
+                
+                {
+                    value: {
+                        command: "ambil_foto",
+                        id: Date.now()
+                    }
+                }
+            );
+        }
+    };
+
+
+        // ==================================================
+        // ERROR
+        // ==================================================
+
+        recognition.onerror = function(event) {
+
+            console.log(
+                "⚠️ Speech error:",
+                event.error
+            );
+
+
+            listening = false;
+
+
+            if (
+
+                event.error === "not-allowed"
+
+                ||
+
+                event.error === "service-not-allowed"
+
+            ) {
+
+                console.log(
+                    "❌ Microphone tidak mendapatkan izin."
+                );
+
+                return;
+
+            }
+
+
+            setTimeout(
+
+                function() {
+
+                    startRecognition();
+
+                },
+
+                1000
+
+            );
+
+        };
+
+
+        // ==================================================
+        // END
+        // ==================================================
+
+        recognition.onend = function() {
+
+            console.log(
+                "🎤 Speech Recognition berhenti."
+            );
+
+
+            listening = false;
+
+
+            setTimeout(
+
+                function() {
+
+                    startRecognition();
+
+                },
+
+                1000
+
+            );
+
+        };
+
+
+        // ==================================================
+        // START
+        // ==================================================
+
+        startRecognition();
+
+    }
+
+
+    // ==================================================
+    // STREAMLIT MESSAGE
+    // ==================================================
+
+    window.addEventListener(
+
+        "message",
+
+        function(event) {
+
+            if (!event.data) {
+
+                return;
+
+            }
+
+
+            // Streamlit mengirim pesan konfigurasi
+            // ke component.
+
+            if (
+
+                event.data.type ===
+                "streamlit:render"
+
+            ) {
+
+                console.log(
+                    "🔄 Streamlit render component."
+                );
+
+            }
+
+        }
+
+    );
+
+</script>
+
+</body>
+
+</html>
