@@ -1,19 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :root{
-
     --primary:#6D4C41;
     --secondary:#8D6E63;
     --accent:#A1887F;
-
     --background:#F7F5F2;
     --card:#FFFFFF;
-
     --text:#333333;
     --text-light:#757575;
-
     --border:#E8E2DC;
-
 }
 
 html,
@@ -22,9 +17,7 @@ body,
     font-family:'Poppins',sans-serif;
 }
 
-.stApp{
-    background:var(--background);
-}
+.stApp{background:var(--background);}
 
 .block-container{
     max-width:1450px;
