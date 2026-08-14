@@ -409,9 +409,7 @@ with top_left:
                                 # TTS HASIL
                                 # ==========================
 
-                                speak(
-                                    prediction
-                                )
+                                tts_text = nominal_to_speech(prediction)
 
 
                             else:
@@ -533,10 +531,7 @@ with top_left:
 
                                 )
 
-
-                                speak(
-                                    prediction
-                                )
+                                tts_text = nominal_to_speech(prediction)
 
 
     # ==================================================
@@ -710,10 +705,7 @@ with top_left:
                 # TTS UPLOAD
                 # ------------------------------------------
 
-                speak(
-                    prediction
-                )
-
+                tts_text = nominal_to_speech(prediction)
 
 # ======================================================
 # PANEL KANAN
