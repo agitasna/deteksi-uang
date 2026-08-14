@@ -1,6 +1,5 @@
 import os
 import time
-import threading
 
 import cv2
 import numpy as np
@@ -15,68 +14,44 @@ import gdown
 MODEL_PATH = "model/model_uang.keras"
 LABEL_PATH = "model/labels.txt"
 
-# ======================================================
-# GOOGLE DRIVE
-# ======================================================
-
-GOOGLE_DRIVE_FILE_ID = (
+# Google Drive
+MODEL_URL = (
+    "https://drive.google.com/uc?id="
     "1cuDYSRLrpqw4s_xIa5D1Sk9wygrx4bWR"
 )
 
 
 # ======================================================
-# DOWNLOAD MODEL
+# DOWNLOAD MODEL DARI GOOGLE DRIVE
 # ======================================================
 
 def download_model():
 
     if os.path.exists(MODEL_PATH):
 
-        print(
-            "Model sudah tersedia secara lokal."
-        )
-
         return
 
-
     os.makedirs(
-        os.path.dirname(MODEL_PATH),
+        "model",
         exist_ok=True
     )
 
-
     print(
-        "Model tidak ditemukan."
-    )
-
-    print(
+        "Model belum tersedia. "
         "Mengunduh model dari Google Drive..."
     )
 
-
-    url = (
-        "https://drive.google.com/uc?id="
-        + GOOGLE_DRIVE_FILE_ID
-    )
-
-
     gdown.download(
-        url,
+        MODEL_URL,
         MODEL_PATH,
         quiet=False
     )
-
 
     if not os.path.exists(MODEL_PATH):
 
         raise FileNotFoundError(
             "Model gagal diunduh dari Google Drive."
         )
-
-
-    print(
-        "Model berhasil diunduh."
-    )
 
 
 # ======================================================
@@ -86,20 +61,15 @@ def download_model():
 def load_model():
 
     # ----------------------------------------------
-    # DOWNLOAD MODEL JIKA BELUM ADA
+    # Pastikan model tersedia
     # ----------------------------------------------
 
     download_model()
 
 
     # ----------------------------------------------
-    # LOAD CNN
+    # Load model
     # ----------------------------------------------
-
-    print(
-        "Memuat model CNN..."
-    )
-
 
     model = tf.keras.models.load_model(
         MODEL_PATH,
@@ -108,7 +78,7 @@ def load_model():
 
 
     # ----------------------------------------------
-    # LOAD LABEL
+    # Load labels
     # ----------------------------------------------
 
     with open(
@@ -118,18 +88,48 @@ def load_model():
     ) as file:
 
         class_names = [
+
             line.strip()
+
             for line in file.readlines()
+
             if line.strip()
+
         ]
 
 
-    print(
-        "Model berhasil dimuat."
+    return model, class_names
+
+
+# ======================================================
+# FORMAT NOMINAL
+# ======================================================
+
+def format_nominal(label):
+
+    nominal_map = {
+
+        "1rb": "Rp1.000",
+
+        "2rb": "Rp2.000",
+
+        "5rb": "Rp5.000",
+
+        "10rb": "Rp10.000",
+
+        "20rb": "Rp20.000",
+
+        "50rb": "Rp50.000",
+
+        "100rb": "Rp100.000"
+
+    }
+
+    return nominal_map.get(
+        label,
+        label
     )
 
-
-    return model, class_names
 
 # ======================================================
 # FORMAT NOMINAL UNTUK SUARA
@@ -149,7 +149,7 @@ def nominal_to_speech(label):
 
         "20rb": "dua puluh ribu rupiah",
 
-        "50rb": "lima puluh ribu rupiah",
+        "50rb": "lima puluh rupiah",
 
         "100rb": "seratus ribu rupiah"
 
@@ -159,17 +159,6 @@ def nominal_to_speech(label):
         label,
         label
     )
-
-
-# ======================================================
-# SPEAK HASIL PREDIKSI
-# ======================================================
-
-def speak(label):
-
-    text = nominal_to_speech(label)
-
-    speak_message(text)
 
 
 # ======================================================
@@ -186,7 +175,7 @@ def predict_image(
 
 
     # ----------------------------------------------
-    # VALIDASI IMAGE
+    # Validasi gambar
     # ----------------------------------------------
 
     if image is None:
@@ -207,7 +196,7 @@ def predict_image(
 
 
     # ----------------------------------------------
-    # RESIZE
+    # Resize
     # ----------------------------------------------
 
     image = cv2.resize(
@@ -217,7 +206,7 @@ def predict_image(
 
 
     # ----------------------------------------------
-    # FLOAT32
+    # Float32
     # ----------------------------------------------
 
     image = image.astype(
@@ -226,7 +215,7 @@ def predict_image(
 
 
     # ----------------------------------------------
-    # BATCH
+    # Batch
     # ----------------------------------------------
 
     image = np.expand_dims(
@@ -236,7 +225,7 @@ def predict_image(
 
 
     # ----------------------------------------------
-    # PREDICTION
+    # Prediction
     # ----------------------------------------------
 
     probability = model.predict(
@@ -246,7 +235,7 @@ def predict_image(
 
 
     # ----------------------------------------------
-    # CLASS INDEX
+    # Class index
     # ----------------------------------------------
 
     index = int(
@@ -257,14 +246,14 @@ def predict_image(
 
 
     # ----------------------------------------------
-    # LABEL
+    # Label
     # ----------------------------------------------
 
     prediction = class_names[index]
 
 
     # ----------------------------------------------
-    # CONFIDENCE
+    # Confidence
     # ----------------------------------------------
 
     confidence = float(
@@ -273,12 +262,14 @@ def predict_image(
 
 
     # ----------------------------------------------
-    # INFERENCE TIME
+    # Inference time
     # ----------------------------------------------
 
     inference = (
+
         time.perf_counter()
         - start_time
+
     ) * 1000
 
 
@@ -302,6 +293,7 @@ def add_history(
 
     history = list(history)
 
+
     history.append({
 
         "prediction": prediction,
@@ -313,5 +305,6 @@ def add_history(
         )
 
     })
+
 
     return history
